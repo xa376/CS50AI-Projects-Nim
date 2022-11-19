@@ -2,7 +2,6 @@ import math
 import random
 import time
 
-
 class Nim():
 
     def __init__(self, initial=[1, 3, 5, 7]):
@@ -101,7 +100,10 @@ class NimAI():
         Return the Q-value for the state `state` and the action `action`.
         If no Q-value exists yet in `self.q`, return 0.
         """
-        raise NotImplementedError
+        if (tuple(state), action) in self.q.keys():
+            return self.q[(tuple(state), action)]
+        else:
+            return 0
 
     def update_q_value(self, state, action, old_q, reward, future_rewards):
         """
@@ -118,7 +120,7 @@ class NimAI():
         `alpha` is the learning rate, and `new value estimate`
         is the sum of the current reward and estimated future rewards.
         """
-        raise NotImplementedError
+        self.q[(tuple(state), action)] = old_q + self.alpha * ((future_rewards + reward) - old_q)
 
     def best_future_reward(self, state):
         """
@@ -130,7 +132,20 @@ class NimAI():
         Q-value in `self.q`. If there are no available actions in
         `state`, return 0.
         """
-        raise NotImplementedError
+        # List of all possible actions
+        possibleActions = Nim.available_actions(list(state))
+
+        # If there is an action, finds highest value action, else highest value is 0
+        if len(possibleActions) > 0:
+            highestValue = -math.inf
+            for action in possibleActions:
+                    q = self.get_q_value(state, action)
+                    highestValue = q if q > highestValue else highestValue
+        else:
+            highestValue = 0
+
+        return highestValue
+
 
     def choose_action(self, state, epsilon=True):
         """
@@ -147,7 +162,26 @@ class NimAI():
         If multiple actions have the same Q-value, any of those
         options is an acceptable return value.
         """
-        raise NotImplementedError
+        possibleActions = Nim.available_actions(list(state))
+        highestValue = -math.inf
+        bestAction = None
+
+        # Finds best action out of all possible
+        for action in possibleActions:
+            q = self.get_q_value(state, action)
+            if q >= highestValue:
+                highestValue = q
+                bestAction = action
+        
+        # If epsilon there is a self.epsilon chance to choose a random action, else returns best action
+        if epsilon:
+            ranNumber = random.random()
+            if ranNumber < self.epsilon:
+                return random.choice(list(possibleActions))
+            else:
+                return bestAction
+        else:
+            return bestAction
 
 
 def train(n):
